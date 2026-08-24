@@ -266,13 +266,19 @@ fn pointer_tab(
                         .min_w(px(332.))
                         .flex_1()
                         .child(scrolling_card(pal, cx)),
-                )
-                .child(
-                    div()
-                        .min_w(px(332.))
-                        .flex_1()
-                        .child(close_button_haptics_card(pal, cx)),
                 ),
+        )
+        // Its own full-width row rather than a 4th slot in the grid above:
+        // a 4th min-w(332px) item there reflows the 3-card grid into a 2×2,
+        // halving the width each card gets (they previously wrapped 2+1, so
+        // the lone 3rd card kept the full row) — which clipped `scrolling_card`'s
+        // longer caption instead of letting it wrap. Keeping this card
+        // separate leaves the existing grid's sizing untouched.
+        .child(
+            div()
+                .w_full()
+                .max_w(px(920.))
+                .child(close_button_haptics_card(pal, cx)),
         )
 }
 
@@ -463,6 +469,7 @@ fn close_button_haptics_card(pal: Palette, cx: &mut Context<AppView>) -> impl In
             .gap_4()
             .child(
                 div()
+                    .min_w_0()
                     .text_caption()
                     .text_color(pal.text_muted)
                     .child(description),
