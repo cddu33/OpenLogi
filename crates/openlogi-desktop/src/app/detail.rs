@@ -266,6 +266,12 @@ fn pointer_tab(
                         .min_w(px(332.))
                         .flex_1()
                         .child(scrolling_card(pal, cx)),
+                )
+                .child(
+                    div()
+                        .min_w(px(332.))
+                        .flex_1()
+                        .child(close_button_haptics_card(pal, cx)),
                 ),
         )
 }
@@ -424,6 +430,71 @@ fn invert_scroll_toggle(on: bool, enabled: bool, pal: Palette) -> AnyElement {
         .on_click(move |_event, _window, cx| {
             cx.update_global::<AppState, _>(|state, _| {
                 state.commit_invert_scroll(!on);
+            });
+            cx.refresh_windows();
+        })
+        .into_any_element()
+}
+
+/// Close-button haptics card: a single on/off toggle for the per-device
+/// hover-the-close-button pulse. Independent of the Actions Ring haptics
+/// toggle in [`crate::features::action_ring`] — that one gates the Actions
+/// Ring's own hover/activation feedback, this one gates a background OS
+/// cursor watch that runs whether or not the ring is even enabled.
+fn close_button_haptics_card(pal: Palette, cx: &mut Context<AppView>) -> impl IntoElement {
+    let (enabled, supported) = cx.try_global::<AppState>().map_or((false, false), |state| {
+        (
+            state.current_close_button_haptics(),
+            state.current_haptics_supported(),
+        )
+    });
+    let description = if supported {
+        tr!("Play a pulse when the cursor hovers a window's close button.")
+    } else {
+        tr!("This device does not report haptic-feedback hardware.")
+    };
+    panel_card(
+        tr!("Close-button haptics"),
+        Icon::empty().path("action-icons/square-x.svg"),
+        pal,
+        h_flex()
+            .justify_between()
+            .items_center()
+            .gap_4()
+            .child(
+                div()
+                    .text_caption()
+                    .text_color(pal.text_muted)
+                    .child(description),
+            )
+            .child(close_button_haptics_toggle(enabled, supported, pal))
+            .into_any_element(),
+    )
+}
+
+/// On/Off pill that flips the active device's close-button haptic pulse,
+/// mirroring [`invert_scroll_toggle`].
+fn close_button_haptics_toggle(on: bool, enabled: bool, pal: Palette) -> AnyElement {
+    let label: SharedString = if on { tr!("On") } else { tr!("Off") };
+    if !enabled {
+        return div()
+            .px_2()
+            .py_1()
+            .rounded(pal.control_radius)
+            .border_1()
+            .border_color(pal.border)
+            .text_caption()
+            .text_color(pal.text_muted)
+            .child(tr!("Unavailable"))
+            .into_any_element();
+    }
+    Button::new("close-button-haptics-toggle")
+        .compact()
+        .label(label)
+        .selected(on)
+        .on_click(move |_event, _window, cx| {
+            cx.update_global::<AppState, _>(|state, _| {
+                state.commit_close_button_haptics(!on);
             });
             cx.refresh_windows();
         })
