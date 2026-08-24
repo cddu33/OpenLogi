@@ -240,12 +240,17 @@ fn pointer_tab(
         .w_full()
         .min_h_0()
         .items_center()
+        // 24 px, a step above the grid's own 16 px card gap: the haptics card is
+        // a separate section stacked under the pointer grid, not a fourth card
+        // in it, so it reads better with a visible section break.
+        .gap_6()
         .overflow_y_scrollbar()
         .p(px(SCREEN_PAD))
         .child(
             h_flex()
                 .w_full()
                 .max_w(px(920.))
+                .flex_shrink_0()
                 .items_stretch()
                 .gap_4()
                 .flex_wrap()
@@ -273,11 +278,16 @@ fn pointer_tab(
         // halving the width each card gets (they previously wrapped 2+1, so
         // the lone 3rd card kept the full row) — which clipped `scrolling_card`'s
         // longer caption instead of letting it wrap. Keeping this card
-        // separate leaves the existing grid's sizing untouched.
+        // separate leaves the existing grid's sizing untouched. Both rows are
+        // `flex_shrink_0`: a second child turns this column into a real flex
+        // container, so the default `flex-shrink: 1` starts biting — the grid
+        // row gets squeezed below its content height and its cards spill over
+        // this one instead of the tab scrolling.
         .child(
             div()
                 .w_full()
                 .max_w(px(920.))
+                .flex_shrink_0()
                 .child(close_button_haptics_card(pal, cx)),
         )
 }

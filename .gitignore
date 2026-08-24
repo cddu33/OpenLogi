@@ -62,3 +62,6 @@ node_modules/
 
 # Packaging output.
 *.dmg
+
+#out directory
+/out/
