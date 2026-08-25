@@ -62,5 +62,11 @@ node_modules/
 
 # Packaging output.
 *.dmg
+<<<<<<< HEAD
 *.msi
 *.wixpdb
+=======
+
+#out directory
+/out/
+>>>>>>> 35273e4a9cf951433656c8a4479e09898742fd09

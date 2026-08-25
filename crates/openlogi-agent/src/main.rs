@@ -618,8 +618,13 @@ async fn run(
                 warn!("camera watcher channel closed — disabling camera automation updates");
                 camera_open = false;
             },
+<<<<<<< HEAD
             Some(app) = poll.app.recv() => {
                 apply_foreground_update(app, &orchestrator, &actions.dispatcher).await;
+=======
+            Some(bundle) = poll.app.recv() => {
+                orchestrator.lock().await.set_current_app(bundle);
+>>>>>>> 35273e4a9cf951433656c8a4479e09898742fd09
             }
             Some(device_key) = actions.triggers.recv() => {
                 begin_action_ring(&orchestrator, &actions.ring, &ring_haptics, device_key.as_deref()).await;

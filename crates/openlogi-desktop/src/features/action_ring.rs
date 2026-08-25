@@ -180,7 +180,12 @@ fn editor_input(
 }
 
 fn current_device_supports_haptics(cx: &Context<ActionRingPanel>) -> bool {
+<<<<<<< HEAD
     AppState::try_read(cx).is_some_and(AppState::current_haptics_supported)
+=======
+    cx.try_global::<AppState>()
+        .is_some_and(AppState::current_haptics_supported)
+>>>>>>> 35273e4a9cf951433656c8a4479e09898742fd09
 }
 
 fn toggle_button(

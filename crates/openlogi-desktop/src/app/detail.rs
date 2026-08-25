@@ -293,7 +293,12 @@ fn tab_body(
         .w_full()
         .min_h_0()
         .items_center()
+        // 24 px, a step above the grid's own 16 px card gap: the haptics card is
+        // a separate section stacked under the pointer grid, not a fourth card
+        // in it, so it reads better with a visible section break.
+        .gap_6()
         .overflow_y_scrollbar()
+<<<<<<< HEAD
         .p(SCREEN_PAD)
         .child(div().w_full().max_w(width.rems()).child(content))
 }
@@ -352,6 +357,53 @@ fn pointer_tab(
             .child(scrolling_card(pal, cx))
             .child(close_button_haptics_card(pal, cx)),
     )
+=======
+        .p(px(SCREEN_PAD))
+        .child(
+            h_flex()
+                .w_full()
+                .max_w(px(920.))
+                .flex_shrink_0()
+                .items_stretch()
+                .gap_4()
+                .flex_wrap()
+                .child(pointer_grid_card(panel_card_fill(
+                    tr!("Pointer tuning"),
+                    Icon::empty().path("action-icons/gauge.svg"),
+                    pal,
+                    dpi_panel.clone().into_any_element(),
+                )))
+                .child(pointer_grid_card(panel_card_fill(
+                    tr!("SmartShift"),
+                    Icon::empty().path("action-icons/refresh-cw.svg"),
+                    pal,
+                    smartshift_panel.clone().into_any_element(),
+                )))
+                .child(
+                    div()
+                        .min_w(px(332.))
+                        .flex_1()
+                        .child(scrolling_card(pal, cx)),
+                ),
+        )
+        // Its own full-width row rather than a 4th slot in the grid above:
+        // a 4th min-w(332px) item there reflows the 3-card grid into a 2×2,
+        // halving the width each card gets (they previously wrapped 2+1, so
+        // the lone 3rd card kept the full row) — which clipped `scrolling_card`'s
+        // longer caption instead of letting it wrap. Keeping this card
+        // separate leaves the existing grid's sizing untouched. Both rows are
+        // `flex_shrink_0`: a second child turns this column into a real flex
+        // container, so the default `flex-shrink: 1` starts biting — the grid
+        // row gets squeezed below its content height and its cards spill over
+        // this one instead of the tab scrolling.
+        .child(
+            div()
+                .w_full()
+                .max_w(px(920.))
+                .flex_shrink_0()
+                .child(close_button_haptics_card(pal, cx)),
+        )
+>>>>>>> 35273e4a9cf951433656c8a4479e09898742fd09
 }
 
 fn pointer_grid_card(card: impl IntoElement) -> impl IntoElement {
@@ -549,6 +601,72 @@ fn close_button_haptics_card(pal: Palette, cx: &mut Context<AppView>) -> impl In
             )
             .into_any_element(),
     )
+}
+
+/// Close-button haptics card: a single on/off toggle for the per-device
+/// hover-the-close-button pulse. Independent of the Actions Ring haptics
+/// toggle in [`crate::features::action_ring`] — that one gates the Actions
+/// Ring's own hover/activation feedback, this one gates a background OS
+/// cursor watch that runs whether or not the ring is even enabled.
+fn close_button_haptics_card(pal: Palette, cx: &mut Context<AppView>) -> impl IntoElement {
+    let (enabled, supported) = cx.try_global::<AppState>().map_or((false, false), |state| {
+        (
+            state.current_close_button_haptics(),
+            state.current_haptics_supported(),
+        )
+    });
+    let description = if supported {
+        tr!("Play a pulse when the cursor hovers a window's close button.")
+    } else {
+        tr!("This device does not report haptic-feedback hardware.")
+    };
+    panel_card(
+        tr!("Close-button haptics"),
+        Icon::empty().path("action-icons/square-x.svg"),
+        pal,
+        h_flex()
+            .justify_between()
+            .items_center()
+            .gap_4()
+            .child(
+                div()
+                    .min_w_0()
+                    .text_caption()
+                    .text_color(pal.text_muted)
+                    .child(description),
+            )
+            .child(close_button_haptics_toggle(enabled, supported, pal))
+            .into_any_element(),
+    )
+}
+
+/// On/Off pill that flips the active device's close-button haptic pulse,
+/// mirroring [`invert_scroll_toggle`].
+fn close_button_haptics_toggle(on: bool, enabled: bool, pal: Palette) -> AnyElement {
+    let label: SharedString = if on { tr!("On") } else { tr!("Off") };
+    if !enabled {
+        return div()
+            .px_2()
+            .py_1()
+            .rounded(pal.control_radius)
+            .border_1()
+            .border_color(pal.border)
+            .text_caption()
+            .text_color(pal.text_muted)
+            .child(tr!("Unavailable"))
+            .into_any_element();
+    }
+    Button::new("close-button-haptics-toggle")
+        .compact()
+        .label(label)
+        .selected(on)
+        .on_click(move |_event, _window, cx| {
+            cx.update_global::<AppState, _>(|state, _| {
+                state.commit_close_button_haptics(!on);
+            });
+            cx.refresh_windows();
+        })
+        .into_any_element()
 }
 
 /// Lighting tab: the RGB controls (swatches, on/off, brightness) in a titled
